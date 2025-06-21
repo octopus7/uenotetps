@@ -1,8 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "EngineUtils.h"
+
 #include "EnemyCatSpawner.h"
 
+#include "EngineUtils.h"
 
 // Sets default values
 AEnemyCatSpawner::AEnemyCatSpawner()
