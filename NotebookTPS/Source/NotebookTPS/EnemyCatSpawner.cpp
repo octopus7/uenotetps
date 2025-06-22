@@ -17,7 +17,7 @@ AEnemyCatSpawner::AEnemyCatSpawner()
 void AEnemyCatSpawner::BeginPlay()
 {
     Super::BeginPlay();
-
+    CurrentDurability = MaxDurability;
     GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AEnemyCatSpawner::SpawnEnemy, SpawnInterval, true);
 }
 
@@ -49,3 +49,22 @@ void AEnemyCatSpawner::SpawnEnemy()
 }
 
 
+float AEnemyCatSpawner::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+    AController* EventInstigator, AActor* DamageCauser)
+{
+    if (DamageAmount <= 0.f || CurrentDurability <= 0.f)
+    {
+        return 0.f;
+    }
+
+    CurrentDurability -= DamageAmount;
+
+    UE_LOG(LogTemp, Log, TEXT("Durability: %.1f / %.1f"), CurrentDurability, MaxDurability);
+
+    if (CurrentDurability <= 0.f)
+    {
+        Destroy();  // ¾×ÅÍ ÆÄ±«
+    }
+
+    return DamageAmount;
+}

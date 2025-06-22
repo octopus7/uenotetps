@@ -29,10 +29,30 @@ public:
     float SpawnRadius = 1000.f;
 
     UPROPERTY(EditAnywhere)
+    float Health = 100.f;
+
+
+    UPROPERTY(EditAnywhere)
     float SpawnInterval = 3.f;
+
+
+    UPROPERTY(EditAnywhere, Category = "Durability")
+    float MaxDurability = 2.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Durability")
+    float CurrentDurability;
 
     // Called every frame
     virtual void Tick(float DeltaTime) override;
+    // 데미지 받는 함수
+    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+        AController* EventInstigator, AActor* DamageCauser) override;
+
+private:
+
+
+
+
 
 protected:
     void SpawnEnemy();
