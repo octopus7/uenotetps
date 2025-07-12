@@ -39,6 +39,7 @@ void AEnemyCatSpawner::SpawnEnemy()
     }
 
     if (ExistingEnemies >= MaxEnemyCount) return;
+    if (SpawnedEnemyCount >= MaxSpawnedEnemyCount) return;
 
     FVector Origin = GetActorLocation();
     FVector Offset = FMath::VRand() * SpawnRadius;
@@ -46,6 +47,7 @@ void AEnemyCatSpawner::SpawnEnemy()
     FRotator SpawnRotation = FRotator::ZeroRotator;
 
     GetWorld()->SpawnActor<AEnemyCatCharacter>(EnemyClass, SpawnLocation, SpawnRotation);
+    SpawnedEnemyCount++;
 }
 
 

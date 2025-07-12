@@ -23,7 +23,14 @@ public:
     TSubclassOf<AEnemyCatCharacter> EnemyClass;
 
     UPROPERTY(EditAnywhere)
-    int32 MaxEnemyCount = 10;
+    int32 MaxEnemyCount = 5;
+
+    UPROPERTY(EditAnywhere)
+    int32 SpawnedEnemyCount = 0;
+
+    UPROPERTY(EditAnywhere)
+    int32 MaxSpawnedEnemyCount = 4;
+
 
     UPROPERTY(EditAnywhere)
     float SpawnRadius = 1000.f;
