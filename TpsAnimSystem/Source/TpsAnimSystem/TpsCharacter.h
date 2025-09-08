@@ -1,0 +1,86 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
+#include "InputActionValue.h"
+
+class USpringArmComponent;
+class UCameraComponent;
+class UInputMappingContext;
+class UInputAction;
+
+#include "TpsCharacter.generated.h"
+
+/**
+ * Third-person character with standard movement and camera.
+ * - Uses Enhanced Input (assets assigned via Blueprint; no asset creation in code)
+ * - Provides Move, Look, Jump, Sprint (hold/toggle), and Crouch toggle
+ */
+UCLASS(Blueprintable, BlueprintType)
+class TPSANIMSYSTEM_API ATpsCharacter : public ACharacter
+{
+    GENERATED_BODY()
+
+public:
+    ATpsCharacter();
+
+protected:
+    virtual void BeginPlay() override;
+    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+private:
+    /* Components */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    USpringArmComponent* CameraBoom;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UCameraComponent* FollowCamera;
+
+    /* Enhanced Input: Assets assigned in Blueprint (do not create in code) */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* DefaultMappingContext = nullptr;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Actions", meta = (AllowPrivateAccess = "true"))
+    UInputAction* MoveAction = nullptr;     // Axis2D
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Actions", meta = (AllowPrivateAccess = "true"))
+    UInputAction* LookAction = nullptr;     // Axis2D
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Actions", meta = (AllowPrivateAccess = "true"))
+    UInputAction* JumpAction = nullptr;     // Digital (bool)
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Actions", meta = (AllowPrivateAccess = "true"))
+    UInputAction* SprintAction = nullptr;   // Digital (bool)
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Actions", meta = (AllowPrivateAccess = "true"))
+    UInputAction* CrouchAction = nullptr;   // Digital (bool)
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input", meta = (AllowPrivateAccess = "true"))
+    int32 InputMappingPriority = 0;
+
+    /* Movement tuning */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", UIMin = "0.0", Units = "cm/s"))
+    float WalkSpeed = 450.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Speed", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", UIMin = "0.0", Units = "cm/s"))
+    float SprintSpeed = 650.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
+    bool bSprintToggle = false; // true = toggle; false = hold
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
+    bool bIsSprinting = false;
+
+private:
+    /* Input handlers */
+    void Input_Move(const FInputActionValue& Value);
+    void Input_Look(const FInputActionValue& Value);
+    void Input_JumpPressed();
+    void Input_JumpReleased();
+    void Input_SprintPressed();
+    void Input_SprintReleased();
+    void Input_CrouchToggle();
+
+    void ApplySprint(bool bEnable);
+};
+
