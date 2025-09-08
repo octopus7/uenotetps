@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+
+class UPrimitiveComponent;
+
 #include "AutoJumpingCube.generated.h"
 
 UCLASS(Blueprintable)
@@ -34,8 +37,14 @@ private:
 
     void TriggerJump();
 
-    // Internal tuning (kept private; not required to expose)
-    float JumpHeight = 200.0f;           // units
-    float JumpPhaseDuration = 0.22f;     // seconds for up or down phase
-};
+    UFUNCTION()
+    void OnMeshHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                   FVector NormalImpulse, const FHitResult& Hit);
 
+    // Internal tuning (kept private; not required to expose)
+    float JumpHeight = 200.0f;           // units (non-physics fallback)
+    float JumpPhaseDuration = 0.22f;     // seconds for up or down phase (non-physics fallback)
+    // Physics jump target height (cm). Used to compute delta-V each jump.
+    // Matches non-physics fallback height for consistent behavior.
+    // Note: 내부 값이며 필요 시 노출 가능.
+};
