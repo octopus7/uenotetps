@@ -10,6 +10,8 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TextRenderComponent.h"
+#include "Components/CapsuleComponent.h"
 
 ATpsCharacter::ATpsCharacter()
 {
@@ -27,6 +29,14 @@ ATpsCharacter::ATpsCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
+
+    HpText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("HpText"));
+    HpText->SetupAttachment(RootComponent);
+    HpText->SetHorizontalAlignment(EHTA_Center);
+    HpText->SetVerticalAlignment(EVRTA_TextCenter);
+    HpText->SetWorldSize(24.f);
+    HpText->SetTextRenderColor(FColor::White);
+    HpText->SetVisibility(true, true);
 
     // Character rotation and movement defaults (typical TPS)
     bUseControllerRotationPitch = false;
@@ -55,6 +65,14 @@ void ATpsCharacter::BeginPlay()
     // Clamp health to max on begin
     Health = FMath::Clamp(Health, 0.f, MaxHealth);
 
+    // Place HP text above head
+    if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+    {
+        const float Z = Capsule->GetScaledCapsuleHalfHeight() + HpTextOffsetZ;
+        HpText->SetRelativeLocation(FVector(0.f, 0.f, Z));
+    }
+    UpdateHpText();
+
     // Ensure walk speed applied (in case defaults were changed in BP)
     if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
     {
@@ -80,6 +98,16 @@ void ATpsCharacter::BeginPlay()
 void ATpsCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+
+    // Rotate HP text around Z to face camera
+    if (HpText)
+    {
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        {
+            const float YawFacing = FRotator::NormalizeAxis(PC->GetControlRotation().Yaw + 180.f);
+            HpText->SetWorldRotation(FRotator(0.f, YawFacing, 0.f));
+        }
+    }
 
     // Track fall start height for fall-damage
     if (const UCharacterMovementComponent* MoveComp = GetCharacterMovement())
@@ -365,6 +393,7 @@ void ATpsCharacter::RequestRespawn()
     const float OldHealth = Health;
     Health = MaxHealth;
     OnHealthChanged(Health, Health - OldHealth);
+    UpdateHpText();
 
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
@@ -388,8 +417,20 @@ void ATpsCharacter::ApplyDamage(float Amount)
     const float Prev = Health;
     Health = FMath::Clamp(Health - Amount, 0.f, MaxHealth);
     OnHealthChanged(Health, Health - Prev);
+    UpdateHpText();
     if (Health <= 0.f)
     {
         HandleDeath();
     }
+}
+
+void ATpsCharacter::UpdateHpText()
+{
+    if (!HpText)
+    {
+        return;
+    }
+    const int32 Cur = FMath::RoundToInt(Health);
+    const int32 Max = FMath::Max(1, FMath::RoundToInt(MaxHealth));
+    HpText->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Cur, Max)));
 }

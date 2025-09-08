@@ -9,6 +9,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UUserWidget;
+class UTextRenderComponent;
 
 #include "TpsCharacter.generated.h"
 
@@ -122,6 +123,13 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true"))
     bool bTrackingFall = false;
 
+    /* UI: Overhead HP text */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI|HPText", meta = (AllowPrivateAccess = "true"))
+    UTextRenderComponent* HpText = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HPText", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", UIMin = "0.0", Units = "cm"))
+    float HpTextOffsetZ = 30.f;
+
 private:
     /* Input handlers */
     void Input_Move(const FInputActionValue& Value);
@@ -138,6 +146,7 @@ private:
     void HandleDeath();
     void ShowDeathUI();
     void HideDeathUI();
+    void UpdateHpText();
 
 public:
     UFUNCTION(BlueprintCallable, Category = "Death")
