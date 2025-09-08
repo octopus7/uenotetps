@@ -31,6 +31,23 @@
 - 누적이 `FallDeathTimeThreshold` 이상이면 `HandleDeath()` 호출 → 위젯 표시, 입력을 UI Only로 전환
 - Respawn 버튼 클릭 시 `RequestRespawn()` → 시작 변환으로 텔레포트, 이동 재활성화, 입력 GameOnly로 복구, 위젯 제거
 
+## 추락 피해(Fall Damage)
+- 설정 위치: `BP_TpsCharacter`의 Details
+  - Damage | Fall
+    - `bEnableFallDamage` (true 시 활성)
+    - `MinDamageHeight` (cm): 이 높이 이하 낙하는 무피해
+    - `MaxDamageHeight` (cm): 이 높이 이상 낙하는 최대 피해
+    - `MaxFallDamage`: 최대 피해량(기본 100)
+  - Health
+    - `MaxHealth`, `Health`(시작 체력)
+- 계산식(선형 스케일)
+  - height = max(0, FallStartZ - LandZ)
+  - height <= MinDamageHeight → 0
+  - height >= MaxDamageHeight → MaxFallDamage
+  - 그 사이: MaxFallDamage * (height - MinDamageHeight) / (MaxDamageHeight - MinDamageHeight)
+- 적용 타이밍: 착지 시점(Landed). 이외에 특이 케이스에서 안전망으로 틱에서 착지 전환을 감지해 동일 계산을 수행합니다.
+- 체력 0 이하가 되면 `HandleDeath()`가 호출되어 사망 처리됩니다.
+
 ## 트러블슈팅
 - 사망 UI가 보이지 않음
   - `DeathWidgetClass`에 `WBP_Death`가 지정되었는지 확인
@@ -44,4 +61,3 @@
 ## 선택 사항
 - GameMode에서 Pawn을 파괴하고 RestartPlayer로 새 Pawn을 스폰하는 방식도 가능합니다.
   - 이 경우 `RequestRespawn()`를 Blueprint에서 override(또는 커스텀 함수)하여 GameMode `RestartPlayer` 호출로 교체하세요.
-

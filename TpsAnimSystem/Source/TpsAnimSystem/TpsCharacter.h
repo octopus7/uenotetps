@@ -28,6 +28,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void Landed(const FHitResult& Hit) override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
@@ -96,6 +97,31 @@ private:
     UPROPERTY(Transient)
     UUserWidget* DeathWidgetInstance = nullptr;
 
+    /* Fall damage + Health */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta = (AllowPrivateAccess = "true", ClampMin = "1.0", UIMin = "1.0"))
+    float MaxHealth = 100.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
+    float Health = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true"))
+    bool bEnableFallDamage = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", UIMin = "0.0", Units = "cm"))
+    float MinDamageHeight = 600.0f; // below this height: no damage
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true", ClampMin = "1.0", UIMin = "1.0", Units = "cm"))
+    float MaxDamageHeight = 2000.0f; // at/above: max damage
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", UIMin = "0.0"))
+    float MaxFallDamage = 100.0f; // maps to Health scale by default
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true", Units = "cm"))
+    float FallStartZ = 0.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage|Fall", meta = (AllowPrivateAccess = "true"))
+    bool bTrackingFall = false;
+
 private:
     /* Input handlers */
     void Input_Move(const FInputActionValue& Value);
@@ -122,4 +148,16 @@ public:
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Death")
     void OnRespawned();
+
+    UFUNCTION(BlueprintCallable, Category = "Health")
+    void ApplyDamage(float Amount);
+
+    UFUNCTION(BlueprintCallable, Category = "Health")
+    float GetHealth() const { return Health; }
+
+    UFUNCTION(BlueprintCallable, Category = "Health")
+    float GetHealthNormalized() const { return MaxHealth > 0.f ? Health / MaxHealth : 0.f; }
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Health")
+    void OnHealthChanged(float NewHealth, float Delta);
 };

@@ -52,6 +52,9 @@ void ATpsCharacter::BeginPlay()
 
     InitialSpawnTransform = GetActorTransform();
 
+    // Clamp health to max on begin
+    Health = FMath::Clamp(Health, 0.f, MaxHealth);
+
     // Ensure walk speed applied (in case defaults were changed in BP)
     if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
     {
@@ -77,6 +80,35 @@ void ATpsCharacter::BeginPlay()
 void ATpsCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+
+    // Track fall start height for fall-damage
+    if (const UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+    {
+        const bool bFalling = MoveComp->IsFalling();
+        if (bFalling && !bTrackingFall)
+        {
+            bTrackingFall = true;
+            FallStartZ = GetActorLocation().Z;
+        }
+        else if (!bFalling && bTrackingFall)
+        {
+            // Safety: in case Landed wasn't called (edge), finalize here using current Z
+            const float FallHeight = FMath::Max(0.f, FallStartZ - GetActorLocation().Z);
+            if (bEnableFallDamage && !bIsDead)
+            {
+                if (FallHeight > MinDamageHeight)
+                {
+                    const float Alpha = FMath::Clamp((FallHeight - MinDamageHeight) / FMath::Max(1.f, (MaxDamageHeight - MinDamageHeight)), 0.f, 1.f);
+                    const float Damage = MaxFallDamage * Alpha;
+                    if (Damage > 0.f)
+                    {
+                        ApplyDamage(Damage);
+                    }
+                }
+            }
+            bTrackingFall = false;
+        }
+    }
 
     if (bIsDead || !bEnableFallDeath)
     {
@@ -224,6 +256,35 @@ void ATpsCharacter::Input_CrouchToggle()
     }
 }
 
+void ATpsCharacter::Landed(const FHitResult& Hit)
+{
+    Super::Landed(Hit);
+
+    if (!bTrackingFall || bIsDead)
+    {
+        bTrackingFall = false;
+        return;
+    }
+
+    const float LandZ = GetActorLocation().Z;
+    const float FallHeight = FMath::Max(0.f, FallStartZ - LandZ);
+
+    if (bEnableFallDamage)
+    {
+        if (FallHeight > MinDamageHeight)
+        {
+            const float Alpha = FMath::Clamp((FallHeight - MinDamageHeight) / FMath::Max(1.f, (MaxDamageHeight - MinDamageHeight)), 0.f, 1.f);
+            const float Damage = MaxFallDamage * Alpha;
+            if (Damage > 0.f)
+            {
+                ApplyDamage(Damage);
+            }
+        }
+    }
+
+    bTrackingFall = false;
+}
+
 void ATpsCharacter::HandleDeath()
 {
     if (bIsDead)
@@ -300,6 +361,11 @@ void ATpsCharacter::RequestRespawn()
     CurrentFallTime = 0.f;
     bIsDead = false;
 
+    // Restore health
+    const float OldHealth = Health;
+    Health = MaxHealth;
+    OnHealthChanged(Health, Health - OldHealth);
+
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         PC->SetIgnoreLookInput(false);
@@ -311,4 +377,19 @@ void ATpsCharacter::RequestRespawn()
 
     ApplySprint(false);
     OnRespawned();
+}
+
+void ATpsCharacter::ApplyDamage(float Amount)
+{
+    if (bIsDead || Amount <= 0.f)
+    {
+        return;
+    }
+    const float Prev = Health;
+    Health = FMath::Clamp(Health - Amount, 0.f, MaxHealth);
+    OnHealthChanged(Health, Health - Prev);
+    if (Health <= 0.f)
+    {
+        HandleDeath();
+    }
 }
