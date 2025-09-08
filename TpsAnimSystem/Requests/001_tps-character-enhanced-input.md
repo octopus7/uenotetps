@@ -18,14 +18,17 @@
   - `BeginPlay`에서 `DefaultMappingContext`가 지정된 경우 `UEnhancedInputLocalPlayerSubsystem`에 `AddMappingContext`만 수행합니다(애셋 자체는 사용자가 생성/할당).
 
 - 입력/애셋 설정 가이드 문서를 추가했습니다.
-  - 경로: `Docs/enhanced-input-guide.md`
+  - 경로: `Documents/enhanced-input-guide.md`
   - 내용: 인풋 액션/매핑 컨텍스트 애셋 생성, 추천 바인딩, 블루프린트에서 `ATpsCharacter` 속성 연결 절차.
 
 - AGENTS 지침을 갱신했습니다.
   - 입력 가이드 문서의 위치와 유지보수 규칙을 명시했습니다.
 
 다음 단계(사용자 수행):
-1) 언리얼 에디터에서 인풋 애셋(IA/IMC) 생성 → `Docs/enhanced-input-guide.md` 절차 참조.
+1) 언리얼 에디터에서 인풋 애셋(IA/IMC) 생성 → `Documents/enhanced-input-guide.md` 절차 참조.
+
+## Update 1 - 2025-09-08
+요청 요약: 문서 디렉터리를 `Docs/`에서 `Documents/`로 변경
+응답: 관련 경로를 `Documents/enhanced-input-guide.md`로 갱신했습니다.
 2) `ATpsCharacter`를 기반으로 블루프린트 생성(BP_TpsCharacter 예시) 후 위 속성에 애셋 연결.
 3) 레벨/게임모드에 BP를 기본 폰으로 지정하고 플레이.
-

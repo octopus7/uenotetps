@@ -9,10 +9,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "Blueprint/UserWidget.h"
 
 ATpsCharacter::ATpsCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
     // Components
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -49,6 +50,8 @@ void ATpsCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    InitialSpawnTransform = GetActorTransform();
+
     // Ensure walk speed applied (in case defaults were changed in BP)
     if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
     {
@@ -68,6 +71,34 @@ void ATpsCharacter::BeginPlay()
                 }
             }
         }
+    }
+}
+
+void ATpsCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    if (bIsDead || !bEnableFallDeath)
+    {
+        return;
+    }
+
+    const UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    if (MoveComp && MoveComp->IsFalling())
+    {
+        // Count only when actually moving downward to avoid counting rising jump time.
+        if (GetVelocity().Z <= 0.f)
+        {
+            CurrentFallTime += DeltaSeconds;
+            if (CurrentFallTime >= FallDeathTimeThreshold)
+            {
+                HandleDeath();
+            }
+        }
+    }
+    else
+    {
+        CurrentFallTime = 0.f;
     }
 }
 
@@ -191,4 +222,93 @@ void ATpsCharacter::Input_CrouchToggle()
     {
         Crouch();
     }
+}
+
+void ATpsCharacter::HandleDeath()
+{
+    if (bIsDead)
+    {
+        return;
+    }
+
+    bIsDead = true;
+
+    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+    {
+        MoveComp->StopMovementImmediately();
+        MoveComp->DisableMovement();
+        MoveComp->SetMovementMode(EMovementMode::MOVE_None);
+    }
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        PC->SetIgnoreLookInput(true);
+        PC->SetIgnoreMoveInput(true);
+        FInputModeUIOnly UIOnly;
+        UIOnly.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        PC->SetInputMode(UIOnly);
+        PC->bShowMouseCursor = true;
+    }
+
+    ShowDeathUI();
+    OnDied();
+}
+
+void ATpsCharacter::ShowDeathUI()
+{
+    if (DeathWidgetInstance || !DeathWidgetClass)
+    {
+        return;
+    }
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        DeathWidgetInstance = CreateWidget<UUserWidget>(PC, DeathWidgetClass);
+        if (DeathWidgetInstance)
+        {
+            DeathWidgetInstance->AddToViewport(1000);
+        }
+    }
+}
+
+void ATpsCharacter::HideDeathUI()
+{
+    if (DeathWidgetInstance)
+    {
+        DeathWidgetInstance->RemoveFromParent();
+        DeathWidgetInstance = nullptr;
+    }
+}
+
+void ATpsCharacter::RequestRespawn()
+{
+    if (!bIsDead)
+    {
+        return;
+    }
+
+    HideDeathUI();
+
+    SetActorTransform(InitialSpawnTransform, false, nullptr, ETeleportType::TeleportPhysics);
+
+    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+    {
+        MoveComp->SetMovementMode(EMovementMode::MOVE_Walking);
+        MoveComp->StopMovementImmediately();
+        MoveComp->MaxWalkSpeed = WalkSpeed;
+    }
+
+    CurrentFallTime = 0.f;
+    bIsDead = false;
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        PC->SetIgnoreLookInput(false);
+        PC->SetIgnoreMoveInput(false);
+        FInputModeGameOnly GameOnly;
+        PC->SetInputMode(GameOnly);
+        PC->bShowMouseCursor = false;
+    }
+
+    ApplySprint(false);
+    OnRespawned();
 }

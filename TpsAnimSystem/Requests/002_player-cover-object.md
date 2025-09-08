@@ -42,7 +42,7 @@
 제약/메모
 - 플레이어 전용 구현 의존성 없음(APawn/ACharacter의 일반 속성만 사용). 델리게이트/인터페이스를 통해 동작 위임.
 - 윈도우 런타임 의존 실행/검증은 수행하지 않았습니다. 로컬(윈도우)에서 통합 후 컴파일/검증해주세요.
-- 입력 스킴 변경은 없으므로 `Docs/enhanced-input-guide.md` 갱신 대상 아님.
+- 입력 스킴 변경은 없으므로 `Documents/enhanced-input-guide.md` 갱신 대상 아님.
 
 생성 파일
 - `Independent/CoverSystem-20250908/README.md`
@@ -54,4 +54,3 @@
 - `Independent/CoverSystem-20250908/Source/CoverSystem/Public/CoverDetectorComponent.h`
 - `Independent/CoverSystem-20250908/Source/CoverSystem/Private/CoverDetectorComponent.cpp`
 - `Independent/CoverSystem-20250908/Source/CoverSystem/Public/CoverUser.h` (선택 인터페이스)
-

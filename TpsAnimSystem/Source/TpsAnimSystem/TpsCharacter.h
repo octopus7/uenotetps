@@ -8,6 +8,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UUserWidget;
 
 #include "TpsCharacter.generated.h"
 
@@ -26,6 +27,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
@@ -71,6 +73,29 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
     bool bIsSprinting = false;
 
+    /* Fall death */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death|Fall", meta = (AllowPrivateAccess = "true", ClampMin = "0.1", UIMin = "0.1", Units = "s"))
+    float FallDeathTimeThreshold = 3.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death|Fall", meta = (AllowPrivateAccess = "true"))
+    bool bEnableFallDeath = true;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Death|State", meta = (AllowPrivateAccess = "true"))
+    bool bIsDead = false;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Death|State", meta = (AllowPrivateAccess = "true", Units = "s"))
+    float CurrentFallTime = 0.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Death|Respawn", meta = (AllowPrivateAccess = "true"))
+    FTransform InitialSpawnTransform;
+
+    /* Death UI (assigned in BP) */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Death|UI", meta = (AllowPrivateAccess = "true"))
+    TSubclassOf<UUserWidget> DeathWidgetClass;
+
+    UPROPERTY(Transient)
+    UUserWidget* DeathWidgetInstance = nullptr;
+
 private:
     /* Input handlers */
     void Input_Move(const FInputActionValue& Value);
@@ -82,5 +107,19 @@ private:
     void Input_CrouchToggle();
 
     void ApplySprint(bool bEnable);
-};
 
+    /* Death/Respawn helpers */
+    void HandleDeath();
+    void ShowDeathUI();
+    void HideDeathUI();
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "Death")
+    void RequestRespawn();
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Death")
+    void OnDied();
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Death")
+    void OnRespawned();
+};
